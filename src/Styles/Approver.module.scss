@@ -1,0 +1,112 @@
+.LeaveStatusContainer {
+  width: 99%;
+}
+.cards {
+  display: flex;
+  margin-top: 30px;
+  justify-content: space-between;
+}
+.card1 {
+  display: flex;
+  width: 30%;
+  border-left: 8px solid #20e87d;
+  border-radius: 8px;
+}
+// .cardStyleMargin {
+//   width: 32%;
+//   margin-left: 2px;
+// }
+.colorBox1 {
+  width: 74px;
+  height: 74px;
+  border-radius: 8px;
+  text-align: center;
+}
+.colorBox1Number {
+  display: flex;
+  height: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  background-color: #20e87d;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: 500;
+}
+.cardText {
+  color: #000;
+  text-align: center;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+  align-content: center;
+  margin-left: 3vh;
+}
+.card2 {
+  display: flex;
+  width: 30%;
+  border-left: 8px solid #ff6947;
+  border-radius: 8px;
+}
+
+.colorBox2 {
+  width: 74px;
+  height: 74px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.colorBox2Number {
+  display: flex;
+  height: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  background-color: #ff6947;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.card3 {
+  display: flex;
+  width: 30%;
+  border-left: 8px solid #4bb3ff;
+  border-radius: 8px;
+}
+
+.colorBox3 {
+  width: 74px;
+  height: 74px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.colorBox3Number {
+  display: flex;
+  height: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  background-color: #4bb3ff;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.LeaveStatusTable {
+  width: 99%;
+  margin-top: 50px;
+}
+.ApproverDashboard {
+  margin-top: 14px;
+  font-size: 32px;
+  font-weight: 600;
+}
+.ManageApprover {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

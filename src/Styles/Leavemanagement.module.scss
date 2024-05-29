@@ -1,0 +1,187 @@
+@import "~@fluentui/react/dist/sass/References.scss";
+:global {
+  #workbenchPageContent,
+  .CanvasComponent.LCS .CanvasZone {
+    max-width: 100% !important;
+  }
+  // * {
+  //   font-family: "Raleway";
+  // }
+}
+
+.leavemanagement {
+  overflow: hidden;
+  padding: 1em;
+  color: "[theme:bodyText, default: #323130]";
+  color: var(--bodyText);
+  &.teams {
+    font-family: $ms-font-family-fallbacks;
+  }
+}
+
+.welcome {
+  text-align: center;
+}
+
+.welcomeImage {
+  width: 100%;
+  max-width: 420px;
+}
+
+.links {
+  a {
+    text-decoration: none;
+    color: "[theme:link, default:#03787c]";
+    color: var(
+      --link
+    ); // note: CSS Custom Properties support is limited to modern browsers only
+
+    &:hover {
+      text-decoration: underline;
+      color: "[theme:linkHovered, default: #014446]";
+      color: var(
+        --linkHovered
+      ); // note: CSS Custom Properties support is limited to modern browsers only
+    }
+  }
+}
+
+.sidenavbarheight {
+  min-height: 500px;
+}
+
+.margin {
+  width: 100%;
+  margin-top: 50%;
+}
+
+.container {
+  width: 100% !important;
+  margin: 0px auto;
+}
+.menuContainer {
+  margin-left: 10px;
+  border-radius: 10px;
+}
+.applyLeaveContainer {
+  width: 99%;
+}
+.cards {
+  display: flex;
+  margin-top: 50px;
+  justify-content: space-between;
+}
+.card1 {
+  display: flex;
+  width: 30%;
+  border-left: 8px solid #20e87d;
+  border-radius: 8px;
+}
+// .cardStyleMargin {
+//   width: 32%;
+//   margin-left: 2px;
+// }
+.colorBox1 {
+  width: 74px;
+  height: 74px;
+  border-radius: 8px;
+  text-align: center;
+}
+.colorBox1Number {
+  display: flex;
+  height: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  background-color: #20e87d;
+  border-radius: 10px;
+  font-size: large;
+}
+.cardText {
+  color: #000;
+  text-align: center;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+  align-content: center;
+  margin-left: 3vh;
+}
+.card2 {
+  display: flex;
+  width: 30%;
+  border-left: 8px solid #ff6947;
+  border-radius: 8px;
+}
+
+.colorBox2 {
+  width: 74px;
+  height: 74px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.colorBox2Number {
+  display: flex;
+  height: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  background-color: #ff6947;
+  border-radius: 10px;
+  font-size: large;
+}
+
+.card3 {
+  display: flex;
+  width: 30%;
+  border-left: 8px solid #4bb3ff;
+  border-radius: 8px;
+}
+
+.colorBox3 {
+  width: 74px;
+  height: 74px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.colorBox3Number {
+  display: flex;
+  height: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  background-color: #4bb3ff;
+  border-radius: 10px;
+  font-size: large;
+}
+
+.leaveRequest {
+  margin-top: 50px;
+  background: white;
+  border-radius: 9px;
+}
+.leaveRequestText {
+  color: #000;
+  text-align: center;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+  align-content: center;
+  // margin-left: 3vh;
+}
+.title {
+  background-color: #ea881a;
+  /* height: 25px; */
+  padding: 5px 13px;
+  width: -webkit-fill-available;
+  border-radius: 15px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Segoe UI Web (West European)", Segoe UI, -apple-system,
+    BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif;
+  overflow: hidden;
+}
