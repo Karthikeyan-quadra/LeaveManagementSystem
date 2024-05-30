@@ -1,5 +1,4 @@
 import * as React from "react";
-// import styles from "../webparts/leavemanagement/components/Approver/Approver.module.scss";
 import styles from "../Styles/Approver.module.scss";
 import { Button, Card, Col, Layout, Row, Table, Tag, notification } from "antd";
 import { getLeaveRequestList } from "../Data/GetSiteLit";
@@ -25,31 +24,7 @@ export default function Approver() {
   const [pendingCount, setPendingCount] = useState(0);
   const [disableApprovesubmit, setDisableApproveSubmit] = useState(false);
   const [disableDenysubmit, setDisableDenySubmit] = useState(false);
-
-  // useEffect(() => {
-  //   async function fetchLeaveData() {
-  //     try {
-  //       const leaveRequests = await getLeaveRequestList();
-  //       // const userLeaveRequests = leaveRequests.filter(
-  //       //   (request) => request.EmailId === envContext.userEmail
-  //       // );
-  //       const processedData: any = leaveRequests.map((request) => ({
-  //         key: request.Id,
-  //         from: moment.utc(request.From).format("DD-MM-YYYY"), // Format From date
-  //         to: moment.utc(request.To).format("DD-MM-YYYY"), // Format To date
-  //         numberOfDays: request.Numberofdays,
-  //         leaveType: request.LeaveType,
-  //         reason: request.Reason, // Include Reason
-  //         status: request.Approved ? "Approved" : "Pending",
-  //       }));
-  //       setLeaveData(processedData);
-  //     } catch (error) {
-  //       console.error("Error fetching leave data:", error);
-  //     }
-  //   }
-
-  //   fetchLeaveData();
-  // }, [envContext.userEmail]);
+  const [originalLeaveAvailable, setOriginalLeaveAvailable] = useState<any>({});
 
   useEffect(() => {
     fetchLeaveData();
@@ -59,44 +34,116 @@ export default function Approver() {
   const fetchLeaveData = async () => {
     try {
       const leaveRequests = await getLeaveRequestList();
-      // const userLeaveRequests = leaveRequests.filter(
-      //   (request) => request.EmailId === envContext.userEmail
-      // );
-      const processedData: any = leaveRequests.map((request) => ({
-        key: request.Id,
-        from: moment.utc(request.From).format("DD-MM-YYYY"), // Format From date
-        to: moment.utc(request.To).format("DD-MM-YYYY"), // Format To date
-        numberOfDays: request.Numberofdays,
-        leaveType: request.LeaveType,
-        reason: request.Reason, // Include Reason
-        status: request.Status,
-        requester: request.Username,
-      }));
+      console.log("Fetched leave requests:", leaveRequests);
+      const originalLeaveValues = leaveRequests.reduce((acc, request) => {
+        acc[request.Id] =
+          request.LeaveAvailable == null
+            ? request.TotalLeaveAdded
+            : request.LeaveAvailable;
+        return acc;
+      }, {});
+
+      console.log("Original LeaveAvailable:", originalLeaveValues);
+      setOriginalLeaveAvailable(originalLeaveValues);
+
+      const processedData: any = leaveRequests.map((request) => {
+        return {
+          key: request.Id,
+          from: moment.utc(request.From).format("DD-MM-YYYY"),
+          to: moment.utc(request.To).format("DD-MM-YYYY"),
+          numberOfDays: request.Numberofdays,
+          leaveType: request.LeaveType,
+          reason: request.Reason,
+          status: request.Status,
+          requester: request.Username,
+          LeaveTaken: request.LeaveTaken == null ? 0 : request.LeaveTaken,
+          TotalLeave: request.TotalLeaveAdded,
+          LeaveAvailable:
+            request.LeaveAvailable == null
+              ? request.TotalLeaveAdded
+              : request.LeaveAvailable,
+        };
+      });
+      console.log("Processed data:", processedData);
+
       setLeaveData(processedData);
+      console.log(processedData);
+      console.log(leaveData);
 
-      const pendingRequests = processedData.filter(
-        (request: any) => request.status === "Pending"
-      );
-      console.log(pendingRequests);
+      // const updateCountsAndFilteredData = (processedData: any[]) => {
+      //   const pendingRequests = processedData.filter(
+      //     (request: any) => request.status === "Pending"
+      //   );
+      //   const approved = processedData.filter(
+      //     (request: any) => request.status === "Approved"
+      //   );
+      //   const rejected = processedData.filter(
+      //     (request: any) => request.status === "Rejected"
+      //   );
 
-      setLeaveData(pendingRequests);
-      const approved = processedData.filter(
-        (request: any) => request.status === "Approved"
-      );
-      const rejected = processedData.filter(
-        (request: any) => request.status === "Rejected"
-      );
-      const pending = processedData.filter(
-        (request: any) => request.status === "Pending"
-      );
+      //   setApprovedCount(approved.length);
+      //   setRejectedCount(rejected.length);
+      //   setPendingCount(pendingRequests.length);
 
-      setApprovedCount(approved.length);
-      setRejectedCount(rejected.length);
-      setPendingCount(pending.length);
+      //   // Update filtered data if searchText is not empty
+      //   // if (searchText) {
+      //   //   const filtered = processedData.filter((item: any) => item.from.toLowerCase().includes(searchText.toLowerCase()) || item.to.toLowerCase().includes(searchText.toLowerCase()) || item.numberOfDays.toString().toLowerCase().includes(searchText.toLowerCase()) || item.leaveType.toLowerCase().includes(searchText.toLowerCase()) || item.reason.toLowerCase().includes(searchText.toLowerCase()) || item.requester.toLowerCase().includes(searchText.toLowerCase()) || item.status.toLowerCase().includes(searchText.toLowerCase()));
+      //   //   setFilteredData(filtered);
+      //   // }
+      // };
+
+      // updateCountsAndFilteredData(processedData);
+
+      // const pendingRequests = processedData.filter(
+      //   (request: any) => request.status === "Pending"
+      // );
+      // console.log(pendingRequests);
+
+      // setLeaveData(pendingRequests);
+
+      // const approved = processedData.filter(
+      //   (request: any) => request.status === "Approved"
+      // );
+      // const rejected = processedData.filter(
+      //   (request: any) => request.status === "Rejected"
+      // );
+      // const pending = processedData.filter(
+      //   (request: any) => request.status === "Pending"
+      // );
+
+      // setApprovedCount(approved.length);
+      // setRejectedCount(rejected.length);
+      // setPendingCount(pending.length);
     } catch (error) {
       console.error("Error fetching leave data:", error);
     }
   };
+  const updateCountsAndFilteredData = (processedData: any[]) => {
+    const pendingRequests = processedData.filter(
+      (request: any) => request.status === "Pending"
+    );
+    const approved = processedData.filter(
+      (request: any) => request.status === "Approved"
+    );
+    const rejected = processedData.filter(
+      (request: any) => request.status === "Rejected"
+    );
+
+    setApprovedCount(approved.length);
+    setRejectedCount(rejected.length);
+    setPendingCount(pendingRequests.length);
+
+    // Update filtered data if searchText is not empty
+    if (searchText) {
+      const filtered: any = processedData.filter((item: any) =>
+        Object.values(item).some((value: any) =>
+          String(value).toLowerCase().includes(searchText.toLowerCase())
+        )
+      );
+      setFilteredData(filtered);
+    }
+  };
+
   const _onFilter = (text: any) => {
     const filtered: any = leaveData.filter(
       (item: any) =>
@@ -148,46 +195,182 @@ export default function Approver() {
     });
   };
 
+  // const approveRequest = async (value: any) => {
+  //   setDisableApproveSubmit(true);
+  //   console.log(value);
+
+  //   const sp: SPFI = getSp();
+
+  //   try {
+  //     const originalLeave = originalLeaveAvailable[value.key];
+
+  //     const updatedLeaveAvailable = originalLeave - value.numberOfDays;
+  //     console.log(updatedLeaveAvailable);
+
+  //     // Calculate new LeaveTaken after approval
+  //     const updatedLeaveTaken = value.TotalLeave - updatedLeaveAvailable;
+  //     console.log(updatedLeaveTaken);
+
+  //     // Update LeaveAvailable and LeaveTaken in the same item
+  //     await sp.web.lists
+  //       .getByTitle("LeaveRequest")
+  //       .items.getById(value.key)
+  //       .update({
+  //         Status: "Approved",
+  //         LeaveAvailable: updatedLeaveAvailable,
+  //         LeaveTaken: updatedLeaveTaken,
+  //       });
+
+  //     console.log(fetchLeaveData);
+  //   } catch (error) {
+  //     console.error("Error approving request:", error);
+  //   }
+  //   await fetchLeaveData();
+
+  //   setDisableApproveSubmit(false);
+  //   openApproveNotification();
+  // };
+
+  // const approveRequest = async (value: any) => {
+  //   setDisableApproveSubmit(true);
+  //   console.log(value);
+
+  //   const sp: SPFI = getSp();
+
+  //   try {
+  //     const originalLeave = originalLeaveAvailable[value.key];
+  //     const updatedLeaveAvailable = originalLeave - value.numberOfDays;
+  //     const updatedLeaveTaken = value.TotalLeave - updatedLeaveAvailable;
+
+  //     await sp.web.lists
+  //       .getByTitle("LeaveRequest")
+  //       .items.getById(value.key)
+  //       .update({
+  //         Status: "Approved",
+  //         LeaveAvailable: updatedLeaveAvailable,
+  //         LeaveTaken: updatedLeaveTaken,
+  //       });
+
+  //     await fetchLeaveData(); // Fetch updated data from server
+
+  //     // Filter out the approved request from leaveData state
+  //     setLeaveData((prevData) =>
+  //       prevData.filter((item: any) => item.key !== value.key)
+  //     );
+
+  //     openApproveNotification();
+  //   } catch (error) {
+  //     console.error("Error approving request:", error);
+  //   }
+  //   setDisableApproveSubmit(false);
+  // };
+
+  // const rejectRequest = async (value: any) => {
+  //   setDisableDenySubmit(true);
+  //   console.log(value);
+
+  //   const sp: SPFI = getSp();
+
+  //   try {
+  //     await sp.web.lists
+  //       .getByTitle("LeaveRequest")
+  //       .items.getById(value.key)
+  //       .update({
+  //         Status: "Rejected",
+  //       });
+  //     fetchLeaveData();
+  //   } catch (error) {
+  //     console.error("Error approving request:", error);
+  //   }
+  //   setDisableDenySubmit(false);
+
+  //   openDeneiedNotification();
+  // };
+
+  // const rejectRequest = async (value: any) => {
+  //   setDisableDenySubmit(true);
+  //   console.log(value);
+
+  //   const sp: SPFI = getSp();
+
+  //   try {
+  //     await sp.web.lists
+  //       .getByTitle("LeaveRequest")
+  //       .items.getById(value.key)
+  //       .update({
+  //         Status: "Rejected",
+  //       });
+
+  //     await fetchLeaveData(); // Fetch updated data from server
+
+  //     // Filter out the rejected request from leaveData state
+  //     setLeaveData((prevData) =>
+  //       prevData.filter((item: any) => item.key !== value.key)
+  //     );
+
+  //     openDeneiedNotification();
+  //   } catch (error) {
+  //     console.error("Error rejecting request:", error);
+  //   }
+  //   setDisableDenySubmit(false);
+  // };
   const approveRequest = async (value: any) => {
     setDisableApproveSubmit(true);
-    console.log(value);
-
-    const sp: SPFI = getSp();
 
     try {
+      const sp: SPFI = getSp();
+      const originalLeave = originalLeaveAvailable[value.key];
+      const updatedLeaveAvailable = originalLeave - value.numberOfDays;
+      const updatedLeaveTaken = value.TotalLeave - updatedLeaveAvailable;
+
       await sp.web.lists
         .getByTitle("LeaveRequest")
         .items.getById(value.key)
         .update({
           Status: "Approved",
+          LeaveAvailable: updatedLeaveAvailable,
+          LeaveTaken: updatedLeaveTaken,
         });
-      fetchLeaveData();
+
+      // Fetch updated data from the server after approval
+      const updatedLeaveRequests = await getLeaveRequestList();
+      const processedData: any =
+        updateCountsAndFilteredData(updatedLeaveRequests);
+
+      setLeaveData(processedData);
+      openApproveNotification();
     } catch (error) {
       console.error("Error approving request:", error);
     }
+
     setDisableApproveSubmit(false);
-    openApproveNotification();
   };
+
   const rejectRequest = async (value: any) => {
     setDisableDenySubmit(true);
-    console.log(value);
-
-    const sp: SPFI = getSp();
 
     try {
+      const sp: SPFI = getSp();
+
       await sp.web.lists
         .getByTitle("LeaveRequest")
         .items.getById(value.key)
         .update({
           Status: "Rejected",
         });
-      fetchLeaveData();
-    } catch (error) {
-      console.error("Error approving request:", error);
-    }
-    setDisableDenySubmit(false);
 
-    openDeneiedNotification();
+      // Fetch updated data from the server after rejection
+      const updatedLeaveRequests = await getLeaveRequestList();
+      const processedData: any =
+        updateCountsAndFilteredData(updatedLeaveRequests);
+
+      setLeaveData(processedData);
+      openDeneiedNotification();
+    } catch (error) {
+      console.error("Error rejecting request:", error);
+    }
+
+    setDisableDenySubmit(false);
   };
 
   const columns = [
@@ -207,14 +390,25 @@ export default function Approver() {
       title: "No.of working days",
       dataIndex: "numberOfDays",
       width: "11%",
+      ellipsis: true,
+    },
 
+    {
+      title: "Leave Avaliable",
+      dataIndex: "LeaveAvailable",
+      width: "11%",
+      ellipsis: true,
+    },
+    {
+      title: "Leave Taken",
+      dataIndex: "LeaveTaken",
+      width: "11%",
       ellipsis: true,
     },
     {
       title: "Leave Type",
       dataIndex: "leaveType",
       width: "10%",
-
       ellipsis: true,
     },
     {
@@ -278,42 +472,6 @@ export default function Approver() {
         </div>
       ),
     },
-    // {
-    //   title: "Actions",
-    //   dataIndex: "status",
-    //   render: (status: any, record: any) => (
-    //     <div style={{ display: "flex" }}>
-    //       {status === "Pending" && (
-    //         <>
-    //           <span>
-    //             <Button
-    //               onClick={() => approveRequest(record)}
-    //               disabled={status !== "Pending"}
-    //               style={{
-    //                 color: "rgba(4, 173, 58, 1)",
-    //                 border: "1px solid rgba(14, 173, 58, 1)",
-    //               }}
-    //             >
-    //               Approve
-    //             </Button>
-    //           </span>
-    //           <span>
-    //             <Button
-    //               onClick={() => rejectRequest(record)}
-    //               disabled={status !== "Pending"}
-    //               style={{
-    //                 color: "rgba(203, 68, 68, 1)",
-    //                 border: "1px solid rgba(203, 68, 68, 1)",
-    //               }}
-    //             >
-    //               X
-    //             </Button>
-    //           </span>
-    //         </>
-    //       )}
-    //     </div>
-    //   ),
-    // },
   ];
   const styl = `
   :where(.css-dev-only-do-not-override-17seli4).ant-card .ant-card-body {

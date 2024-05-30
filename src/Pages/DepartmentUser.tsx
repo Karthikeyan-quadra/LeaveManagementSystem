@@ -1,5 +1,5 @@
 import * as React from "react";
-import { getApproverList, getDepartmentList } from "../Data/GetSiteLit";
+import { getDepartmentList, getDepartmentUserList } from "../Data/GetSiteLit";
 import { useForm } from "antd/es/form/Form";
 import {
   Row,
@@ -23,19 +23,22 @@ import "@pnp/sp/webs";
 import styles from "../Styles/Approver.module.scss";
 const { Option } = Select;
 
-export default function ManageApprover() {
+export default function DepartmentUser() {
   const [form] = useForm();
   const [editForm] = useForm();
   const [open, setOpen] = useState(false);
   const [isAdded, setIsAdded] = useState(true);
   const [isEdited, setIsEdited] = useState(true);
-  const [searchText, setSearchText] = useState("");
-  const [filteredData, setFilteredData] = useState([]);
+  const [disableAddsubmit, setDisableAddSubmit] = useState(false);
+  const [disablesEditsubmit, setDisableEditSubmit] = useState(false);
+
   const [add_UserName, setAddUserName] = useState<any>();
   const [add_EmailID, setAddEmailID] = useState<any>();
+  const [add_Leave, setAddLeave] = useState<any>();
+
   const [departments, setDepartments] = useState<any>([]);
   const [subdepartments, setSubdepartments] = useState<any>([]);
-  const [approvers, setApprovers] = useState<any>([]); // New state for approvers list
+  const [users, setUsers] = useState<any>([]); // New state for approvers list
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     null
   );
@@ -45,6 +48,9 @@ export default function ManageApprover() {
 
   const [edit_UserName, setEditUserName] = useState<any>();
   const [edit_EmailID, setEditEmailID] = useState<any>();
+  const [edit_Leave, setEditLeave] = useState<any>();
+  const [searchText, setSearchText] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
   const [edit_Department, setEditDepartment] = useState<any>();
   const [edit_Subdepartment, setEditSubdepartment] = useState<any>();
   const [selecteditem, setSelectedItem] = useState<any>("");
@@ -57,19 +63,34 @@ export default function ManageApprover() {
       console.log(dept);
       const formattedDepts: any = dept.map((item: any) => ({
         ...item,
-        Subdepartments: item.Subdepartment, // Assuming Subdepartment is an array
+        Subdepartments: item.Subdepartment,
       }));
       setDepartments(formattedDepts);
     };
     fetchDepartments();
   }, []);
   useEffect(() => {
-    const fetchApprovers = async () => {
-      const approversList = await getApproverList();
-      setApprovers(approversList);
+    const fetchDepartmentUser = async () => {
+      const deparmtnetUserList = await getDepartmentUserList();
+      setUsers(deparmtnetUserList);
     };
-    fetchApprovers();
+    fetchDepartmentUser();
   }, []);
+
+  const _onFilter = (text: any) => {
+    const filtered: any = users.filter(
+      (item: any) =>
+        item.UserName.toLowerCase().includes(text.toLowerCase()) ||
+        item.EmailId.toLowerCase().includes(text.toLowerCase()) ||
+        item.Department.toLowerCase().includes(text.toLowerCase()) ||
+        item.TotalLeaveAdded.toString()
+          .toLowerCase()
+          .includes(text.toLowerCase()) ||
+        item.Subdepartment.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredData(filtered);
+    setSearchText(text);
+  };
 
   const showDrawer = () => {
     setOpen(true);
@@ -99,12 +120,17 @@ export default function ManageApprover() {
       dataIndex: "Department",
       key: "department",
     },
+
     {
       title: "Subdepartment",
       dataIndex: "Subdepartment",
       key: "subdepartment",
     },
-
+    {
+      title: "Leave Added",
+      dataIndex: "TotalLeaveAdded",
+      key: "TotalLeaveAdded",
+    },
     {
       title: "",
       dataIndex: "Department",
@@ -159,19 +185,8 @@ export default function ManageApprover() {
       "User MailID": record.EmailId,
       Department: record.Department,
       "Sub Department": record.Subdepartment,
+      "Add Leave Balance": record.TotalLeaveAdded,
     });
-  };
-
-  const _onFilter = (text: any) => {
-    const filtered: any = approvers.filter(
-      (item: any) =>
-        item.UserName.toLowerCase().includes(text.toLowerCase()) ||
-        item.EmailId.toLowerCase().includes(text.toLowerCase()) ||
-        item.Department.toLowerCase().includes(text.toLowerCase()) ||
-        item.Subdepartment.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredData(filtered);
-    setSearchText(text);
   };
 
   const handleadd_Username = (e: any) => {
@@ -183,6 +198,11 @@ export default function ManageApprover() {
     console.log(add_EmailID);
   };
 
+  const handleadd_Leave = (e: any) => {
+    setAddLeave(e.target.value);
+    console.log(add_Leave);
+  };
+
   const DeleteUser = async (record: any) => {
     console.log("Delete user function called");
     console.log("Record:", record);
@@ -192,7 +212,7 @@ export default function ManageApprover() {
     try {
       // Delete the user from the SharePoint list based on the record ID
       await sp.web.lists
-        .getByTitle("ApproverList")
+        .getByTitle("DepartmentUser")
         .items.getById(record.ID)
         .delete();
       notification.success({
@@ -203,10 +223,10 @@ export default function ManageApprover() {
       console.log("User deleted successfully");
 
       // Update the state to reflect the changes (remove the deleted user from the list)
-      const updatedApprovers = approvers.filter(
+      const updatedApprovers = users.filter(
         (user: any) => user.ID !== record.ID
       );
-      setApprovers(updatedApprovers);
+      setUsers(updatedApprovers);
     } catch (error) {
       console.error("Error deleting user:", error);
       notification.error({
@@ -214,11 +234,13 @@ export default function ManageApprover() {
         description: "Failed to delete user",
       });
     }
-    const approversList = await getApproverList();
-    setApprovers(approversList);
+    const userList = await getDepartmentUserList();
+    setUsers(userList);
   };
 
   const handleAddUser = async () => {
+    setDisableAddSubmit(true);
+
     console.log("handleAddUser function called");
 
     const newRequest = {
@@ -226,12 +248,33 @@ export default function ManageApprover() {
       EmailId: add_EmailID,
       Department: selectedDepartment,
       Subdepartment: selectedSubdepartment,
+      TotalLeaveAdded: add_Leave,
     };
+
     const sp: SPFI = getSp();
 
     try {
+      // Fetch the current list of users
+      const existingUsers = await getDepartmentUserList();
+      console.log(existingUsers);
+
+      // Check if the email ID already exists
+      const emailExists = existingUsers.some(
+        (user: any) => user.EmailId.toLowerCase() === add_EmailID.toLowerCase()
+      );
+
+      if (emailExists) {
+        notification.error({
+          message: "Error",
+          description: "Email ID already exists.",
+          placement: "top",
+        });
+        return; // Exit the function if email ID exists
+      }
+
+      // Add the new user to the SharePoint list
       const response = await sp.web.lists
-        .getByTitle("ApproverList")
+        .getByTitle("DepartmentUser")
         .items.add(newRequest);
       notification.success({
         message: "Added",
@@ -240,14 +283,16 @@ export default function ManageApprover() {
       });
       console.log("User added:", response);
     } catch (error) {
-      console.error("Error adding  user:", error);
+      console.error("Error adding user:", error);
     }
+
     setIsAdded(false);
 
     setOpen(false);
     form.resetFields();
-    const approversList = await getApproverList();
-    setApprovers(approversList);
+    const userList = await getDepartmentUserList();
+    setUsers(userList);
+    setDisableAddSubmit(false);
   };
 
   const handleDepartmentChange = (value: string) => {
@@ -259,18 +304,27 @@ export default function ManageApprover() {
     form.setFieldsValue({ Subdepartment: undefined }); // Reset subdepartment when department changes
     setSelectedSubdepartment(null); // Reset the selected subdepartment state
   };
+
   const handleSubdepartmentChange = (value: string) => {
     setSelectedSubdepartment(value);
     console.log(selectedSubdepartment);
   };
+
   const handledit_Username = (e: any) => {
     setEditUserName(e.target.value);
     setOnChanged(true);
   };
+
+  const handleedit_Leave = (e: any) => {
+    setEditLeave(e.target.value);
+    setOnChanged(true);
+  };
+
   const handleedit_UserMailID = (e: any) => {
     setEditEmailID(e.target.value);
     setOnChanged(true);
   };
+
   const editDepartmentChange = (value: string) => {
     setEditDepartment(value);
     const selectedDept = departments.find(
@@ -288,6 +342,8 @@ export default function ManageApprover() {
   };
 
   const handleeditUser = async () => {
+    setDisableEditSubmit(true);
+
     console.log("handleeditUser function called");
 
     const updatedUser = {
@@ -295,13 +351,35 @@ export default function ManageApprover() {
       EmailId: edit_EmailID,
       Department: edit_Department,
       Subdepartment: edit_Subdepartment,
+      TotalLeaveAdded: edit_Leave,
     };
 
     const sp: SPFI = getSp();
 
     try {
+      // Fetch the current list of users
+      const existingUsers = await getDepartmentUserList();
+      console.log(existingUsers);
+
+      // Check if the email ID already exists and is not the current user's email
+      const emailExists = existingUsers.some(
+        (user: any) =>
+          user.EmailId.toLowerCase() === edit_EmailID.toLowerCase() &&
+          user.ID !== selecteditem
+      );
+
+      if (emailExists) {
+        notification.error({
+          message: "Error",
+          description: "Email ID already exists.",
+          placement: "top",
+        });
+        return; // Exit the function if email ID exists
+      }
+
+      // Update the user in the SharePoint list
       const response = await sp.web.lists
-        .getByTitle("ApproverList")
+        .getByTitle("DepartmentUser")
         .items.getById(selecteditem)
         .update(updatedUser);
       notification.success({
@@ -312,20 +390,27 @@ export default function ManageApprover() {
       console.log("User updated:", response);
     } catch (error) {
       console.error("Error updating user:", error);
+      notification.error({
+        message: "Error",
+        description: "Failed to update user",
+        placement: "top",
+      });
     }
 
     setManageOpen(false);
     editForm.resetFields();
-    const approversList = await getApproverList();
-    setApprovers(approversList);
+
+    const userList = await getDepartmentUserList();
+    setUsers(userList);
+    setDisableEditSubmit(false);
   };
+
   return (
     <div style={{ width: "99%" }}>
       <div>
-        <div className={styles.ManageApproverText}>
-          <span>Manage Approver</span>
+        <div className={styles.DepartmentUser}>
+          <span>Department User</span>
         </div>
-
         <div style={{ marginTop: "20px" }}>
           <Row className={styles.ManageApprover}>
             <Col>
@@ -347,7 +432,7 @@ export default function ManageApprover() {
                   alt="UserImage"
                   style={{ padding: "5px" }}
                 />
-                Add Approver
+                Add User
               </Button>
             </Col>
             <Col
@@ -388,6 +473,7 @@ export default function ManageApprover() {
                       backgroundColor: "rgba(74, 173, 146, 1)",
                       color: "white",
                     }}
+                    disabled={disableAddsubmit}
                     onClick={() => form.submit()} // Trigger the form submit manually
                   >
                     Add
@@ -500,8 +586,8 @@ export default function ManageApprover() {
                   <Row gutter={24}>
                     <Col span={24}>
                       <Form.Item
-                        label="Subdepartment"
-                        name="Subdepartment"
+                        label="Sub Department"
+                        name="Sub Department"
                         style={{
                           maxWidth: 400,
                           marginTop: 17,
@@ -526,6 +612,32 @@ export default function ManageApprover() {
                             </Option>
                           ))}
                         </Select>
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  <Row gutter={24}>
+                    <Col span={24}>
+                      <Form.Item
+                        label="Add Leave Balance"
+                        name="Add Leave Balance"
+                        style={{
+                          maxWidth: 400,
+                          marginTop: 17,
+                          fontSize: "16px",
+                          fontWeight: "600",
+                        }}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please add leave balance!",
+                          },
+                        ]}
+                      >
+                        <Input
+                          type="number"
+                          onChange={handleadd_Leave}
+                          value={add_Leave}
+                        />
                       </Form.Item>
                     </Col>
                   </Row>
@@ -558,6 +670,7 @@ export default function ManageApprover() {
                       backgroundColor: "rgba(74, 173, 146, 1)",
                       color: "white",
                     }}
+                    disabled={disablesEditsubmit}
                     onClick={() => editForm.submit()} // Trigger the form submit manually
                   >
                     Submit
@@ -700,6 +813,32 @@ export default function ManageApprover() {
                       </Form.Item>
                     </Col>
                   </Row>
+                  <Row gutter={24}>
+                    <Col span={24}>
+                      <Form.Item
+                        label="Add Leave Balance"
+                        name="Add Leave Balance"
+                        style={{
+                          maxWidth: 400,
+                          marginTop: 17,
+                          fontSize: "16px",
+                          fontWeight: "600",
+                        }}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please add leave balance!",
+                          },
+                        ]}
+                      >
+                        <Input
+                          type="number"
+                          onChange={handleedit_Leave}
+                          value={edit_Leave}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
                 </Form>
               </div>
             </Drawer>
@@ -711,7 +850,7 @@ export default function ManageApprover() {
       <div style={{ marginTop: "20px" }}>
         <Table
           columns={columns}
-          dataSource={searchText ? filteredData : approvers}
+          dataSource={searchText ? filteredData : users}
         />
       </div>
     </div>

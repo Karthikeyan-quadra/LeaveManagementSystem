@@ -23,7 +23,11 @@ import "@pnp/sp/items";
 import "@pnp/sp/webs";
 import { getSp } from "../Services/PnpConfig";
 import { SPFI } from "@pnp/sp";
-import { getLeaveRequestList, getHolidayList } from "../Data/GetSiteLit";
+import {
+  getLeaveRequestList,
+  getHolidayList,
+  getTotalLeaveAddedFromDepartmentUser,
+} from "../Data/GetSiteLit";
 import { UserContext } from "../webparts/leavemanagement/components/Leavemanagement";
 import Calendar from "../Component/Calendar";
 import * as dayjs from "dayjs";
@@ -175,11 +179,16 @@ export default function ApplyLeave() {
     const sp: SPFI = getSp();
     try {
       // Add the new leave request to the SharePoint list
+      const totalLeaveAdded = await getTotalLeaveAddedFromDepartmentUser(
+        envContext.userEmail
+      );
+
       const datainlist = await getLeaveRequestList();
       console.log(datainlist);
-      const response = await sp.web.lists
-        .getByTitle("LeaveRequest")
-        .items.add(newRequest);
+      const response = await sp.web.lists.getByTitle("LeaveRequest").items.add({
+        ...newRequest,
+        TotalLeaveAdded: totalLeaveAdded,
+      });
       console.log("Leave request added:", response);
       openNotification();
     } catch (error) {

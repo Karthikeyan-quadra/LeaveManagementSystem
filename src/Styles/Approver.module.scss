@@ -101,7 +101,7 @@
 }
 .ApproverDashboard {
   margin-top: 14px;
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 600;
 }
 .ManageApprover {
@@ -109,4 +109,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.DepartmentUser {
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.ManageApproverText {
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 600;
 }
