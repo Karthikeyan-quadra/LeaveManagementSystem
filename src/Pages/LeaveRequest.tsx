@@ -29,14 +29,16 @@ export default function Leave() {
   };
 
   const styl = `
-    :where(.css-dev-only-do-not-override-17seli4).ant-layout .ant-layout-sider-light {
+    :where(.css-dev-only-do-not-override-17seli4).ant-layout .ant-layout-sider-light,
+    :where(.css-17seli4).ant-layout .ant-layout-sider-light {
       background: #ffffff;
       max-width: 300px !important;
       min-width: 270px !important;
       width: 300px !important;
       border-radius: 11px;
     }
-    :where(.css-dev-only-do-not-override-17seli4).ant-menu-light, :where(.css-dev-only-do-not-override-17seli4).ant-menu-light>.ant-menu {
+    :where(.css-dev-only-do-not-override-17seli4).ant-menu-light, :where(.css-dev-only-do-not-override-17seli4).ant-menu-light>.ant-menu,
+    :where(.css-17seli4).ant-menu-light, :where(.css-17seli4).ant-menu-light>.ant-menu {
       color: rgba(0, 0, 0, 0.88);
       background: #ffffff;
       border-radius: 11px;
@@ -131,7 +133,16 @@ export default function Leave() {
                     }
                     title="Approver"
                   >
-                    <Menu.Item key="2.1">
+                    <Menu.Item
+                      key="2.1"
+                      icon={
+                        <img
+                          // src={require("../../Images/Verified.png")}
+                          src={require("../webparts/leavemanagement/Images/dashboard.png")}
+                          style={{ width: "24px", height: "24px" }}
+                        />
+                      }
+                    >
                       <Link
                         to="/approver/approver-dashboard"
                         style={{ color: "black", textDecoration: "none" }}
@@ -139,25 +150,108 @@ export default function Leave() {
                         Approver Dashboard
                       </Link>
                     </Menu.Item>
-                    <Menu.Item key="2.2">
+                    {/* <Menu.Item
+                      key="2.2"
+                      icon={
+                        <img
+                          // src={require("../../Images/Verified.png")}
+                          src={require("../webparts/leavemanagement/Images/approver.png")}
+                          style={{ width: "24px", height: "24px" }}
+                        />
+                      }
+                    >
                       <Link
                         to="/approver/manage-approver"
                         style={{ color: "black", textDecoration: "none" }}
                       >
                         Manage Approver
                       </Link>
-                    </Menu.Item>
-                    <Menu.Item key="2.3">
+                    </Menu.Item> */}
+                    {/* <Menu.Item
+                      key="2.3"
+                      icon={
+                        <img
+                          // src={require("../../Images/Verified.png")}
+                          src={require("../webparts/leavemanagement/Images/users.png")}
+                          style={{ width: "24px", height: "24px" }}
+                        />
+                      }
+                    >
                       <Link
                         to="/approver/department-user"
                         style={{ color: "black", textDecoration: "none" }}
                       >
                         Deapartment User
                       </Link>
-                    </Menu.Item>
+                    </Menu.Item> */}
                     {/* Add more submenu items if needed */}
                   </Menu.SubMenu>
                 )}
+
+                <Menu.SubMenu
+                  key="3"
+                  icon={
+                    <img
+                      // src={require("../../Images/Verified.png")}
+                      src={require("../webparts/leavemanagement/Images/HR.png")}
+                      style={{ width: "24px", height: "24px" }}
+                    />
+                  }
+                  title="HR Adimn"
+                >
+                  {/* <Menu.Item
+                    key="3.1"
+                    icon={
+                      <img
+                        // src={require("../../Images/Verified.png")}
+                        src={require("../webparts/leavemanagement/Images/dashboard.png")}
+                        style={{ width: "24px", height: "24px" }}
+                      />
+                    }
+                  >
+                    <Link
+                      to="/approver/approver-dashboard"
+                      style={{ color: "black", textDecoration: "none" }}
+                    >
+                      Approver Dashboard
+                    </Link>
+                  </Menu.Item> */}
+                  <Menu.Item
+                    key="3.1"
+                    icon={
+                      <img
+                        // src={require("../../Images/Verified.png")}
+                        src={require("../webparts/leavemanagement/Images/approver.png")}
+                        style={{ width: "24px", height: "24px" }}
+                      />
+                    }
+                  >
+                    <Link
+                      to="/approver/manage-approver"
+                      style={{ color: "black", textDecoration: "none" }}
+                    >
+                      Manage Approver
+                    </Link>
+                  </Menu.Item>
+                  <Menu.Item
+                    key="3.2"
+                    icon={
+                      <img
+                        // src={require("../../Images/Verified.png")}
+                        src={require("../webparts/leavemanagement/Images/users.png")}
+                        style={{ width: "24px", height: "24px" }}
+                      />
+                    }
+                  >
+                    <Link
+                      to="/approver/department-user"
+                      style={{ color: "black", textDecoration: "none" }}
+                    >
+                      Organization User
+                    </Link>
+                  </Menu.Item>
+                  {/* Add more submenu items if needed */}
+                </Menu.SubMenu>
               </Menu>
             </Sider>
 

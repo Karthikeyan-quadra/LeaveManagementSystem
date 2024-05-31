@@ -26,7 +26,9 @@ import { SPFI } from "@pnp/sp";
 import {
   getLeaveRequestList,
   getHolidayList,
-  getTotalLeaveAddedFromDepartmentUser,
+  updateLeaveRequestWithDepartment,
+  getLeaveeList,
+  getCurrentUserEmail,
 } from "../Data/GetSiteLit";
 import { UserContext } from "../webparts/leavemanagement/components/Leavemanagement";
 import Calendar from "../Component/Calendar";
@@ -47,6 +49,12 @@ export default function ApplyLeave() {
   const [holidays, setHolidays] = useState<any>([]);
 
   const [dateRange, setDateRange] = useState([null, null]);
+  const [department, setDepartment] = useState<string>("");
+  const [subdepartment, setSubdepartment] = useState<string>("");
+  const [leavesAvailable, setLeavesAvailable] = useState(0);
+  const [leavesTaken, setLeavesTaken] = useState(0);
+  const [totalLeaves, setTotalLeaves] = useState(0);
+  const [unpaidEnabled, setUnpaidEnabled] = useState(false);
 
   console.log(setDateRange);
   console.log(setErrorMessage);
@@ -71,10 +79,6 @@ export default function ApplyLeave() {
       console.log("Start Date:", startDate);
       console.log("End Date:", endDate);
 
-      // const formattedStartDate = startDate.format("DD-MM-YYYY");
-      // const formattedEndDate = endDate.format("DD-MM-YYYY");
-      // console.log("Formatted Start Date:", formattedStartDate);
-      // console.log("Formatted End Date:", formattedEndDate);
       const formattedStartDate = startDate.format("DD-MM-YYYY");
       const formattedEndDate = endDate.format("DD-MM-YYYY");
       const isoStartDate = startDate.toISOString();
@@ -93,9 +97,6 @@ export default function ApplyLeave() {
         currentDate.isBefore(endDate) ||
         currentDate.isSame(endDate, "day")
       ) {
-        // if (currentDate.day() === 0 || currentDate.day() === 6) {
-        //   numberOfDays--; // Exclude weekends
-        // }
         if (
           currentDate.day() === 0 ||
           currentDate.day() === 6 ||
@@ -119,10 +120,26 @@ export default function ApplyLeave() {
     console.log(dateRange);
   }, [dateRange]);
 
-  const changeReason = (e: any) => {
-    setReason(e.target.value);
-    console.log(reason);
-  };
+  // useEffect(() => {
+  //   const fetchDepartmentAndSubdepartment = async () => {
+  //     try {
+  //       const {
+  //         department: fetchedDepartment,
+  //         subdepartment: fetchedSubdepartment,
+  //       } = await updateLeaveRequestWithDepartment(
+  //         envContext.userEmail,
+  //         department,
+  //         subdepartment
+  //       );
+  //       setDepartment(fetchedDepartment);
+  //       setSubdepartment(fetchedSubdepartment);
+  //     } catch (error) {
+  //       console.error("Error fetching department and subdepartment:", error);
+  //     }
+  //   };
+  //   fetchDepartmentAndSubdepartment();
+  // }, [envContext.userEmail, department, subdepartment]);
+
   const openNotification = () => {
     notification.info({
       message: (
@@ -150,10 +167,35 @@ export default function ApplyLeave() {
     };
     fetchHolidays();
   }, []);
-  // const disableWeekends = (current: any) => {
-  //   // Disable Saturdays and Sundays
-  //   return current && (current.day() === 0 || current.day() === 6);
-  // };
+
+  useEffect(() => {
+    const fetchLeaveData = async () => {
+      try {
+        const currentUserEmail = await getCurrentUserEmail(); // Fetch current user's email
+        const leaveListData = await getLeaveeList(currentUserEmail); // Fetch leave data for the current user
+        if (leaveListData.length === 0) {
+          throw new Error("No leave data found for the user");
+        }
+
+        // Assuming the leave data structure contains fields like LeavesAvailable, LeavesTaken, TotalLeaves
+        const { LeavesAvailable, LeavesTaken, TotalLeaves } = leaveListData[0];
+
+        setLeavesAvailable(LeavesAvailable || 0);
+        setLeavesTaken(LeavesTaken || 0);
+        setTotalLeaves(TotalLeaves || 0);
+        setUnpaidEnabled(LeavesAvailable === 0);
+      } catch (error) {
+        console.error("Error fetching leave data:", error);
+        notification.error({
+          message: "Error",
+          description: "Failed to fetch leave data",
+          placement: "top",
+        });
+      }
+    };
+
+    fetchLeaveData();
+  }, []);
   const disableWeekends = (current: any) => {
     // Disable weekends and holidays
     return (
@@ -163,40 +205,114 @@ export default function ApplyLeave() {
         holidays.some((holiday: any) => holiday.isSame(current, "day")))
     );
   };
-  const saveRequest = async () => {
-    setDisableSubmit(true);
-    const newRequest = {
-      From: startDate,
-      To: endDate,
-      Numberofdays: numberOfDays,
-      LeaveType: leaveType,
-      Reason: reason,
-      EmailId: envContext.userEmail,
-      Username: envContext.userDisplayName,
-
-      Status: "Pending",
-    };
-    const sp: SPFI = getSp();
+  const changeReason = (e: any) => {
+    setReason(e.target.value);
+    console.log(reason);
+  };
+  const fetchExistingLeaveRequests = async (email: any) => {
     try {
-      // Add the new leave request to the SharePoint list
-      const totalLeaveAdded = await getTotalLeaveAddedFromDepartmentUser(
+      const sp = getSp();
+      const leaveRequests = await sp.web.lists
+        .getByTitle("LeaveRequest")
+        .items.filter(`EmailId eq '${email}'`)();
+      return leaveRequests;
+    } catch (error) {
+      console.error("Error fetching leave requests:", error);
+      return [];
+    }
+  };
+  const checkForOverlappingDates = (
+    startDate: any,
+    endDate: any,
+    existingRequests: any
+  ) => {
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+
+    return existingRequests.some((request: any) => {
+      const requestStart = dayjs(request.From);
+      const requestEnd = dayjs(request.To);
+
+      // Check if the ranges overlap
+      return (
+        ((start.isSame(requestStart, "day") || start.isAfter(requestStart)) &&
+          (start.isSame(requestEnd, "day") || start.isBefore(requestEnd))) ||
+        ((end.isSame(requestStart, "day") || end.isAfter(requestStart)) &&
+          (end.isSame(requestEnd, "day") || end.isBefore(requestEnd)))
+      );
+    });
+  };
+
+  const saveRequest = async () => {
+    if (disablesubmit) return; // Prevent multiple submissions
+    setDisableSubmit(true);
+
+    try {
+      const newRequest = {
+        From: startDate,
+        To: endDate,
+        Numberofdays: numberOfDays,
+        LeaveType: leaveType,
+        Reason: reason,
+        EmailId: envContext.userEmail,
+        Username: envContext.userDisplayName,
+        Status: "Pending",
+        Department: department, // Add department
+        Subdepartment: subdepartment, // Add subdepartment
+      };
+      const existingRequests = await fetchExistingLeaveRequests(
         envContext.userEmail
       );
+      const start = dayjs(startDate);
+      const end = dayjs(endDate);
 
+      if (checkForOverlappingDates(start, end, existingRequests)) {
+        notification.error({
+          message: "Error",
+          description:
+            "You have already applied for leave on the selected dates",
+        });
+        setDisableSubmit(false); // Enable submit button
+        form.resetFields();
+        return;
+      }
+
+      const sp: SPFI = getSp();
       const datainlist = await getLeaveRequestList();
       console.log(datainlist);
-      const response = await sp.web.lists.getByTitle("LeaveRequest").items.add({
-        ...newRequest,
-        TotalLeaveAdded: totalLeaveAdded,
-      });
+
+      // Add the new leave request
+      const response = await sp.web.lists
+        .getByTitle("LeaveRequest")
+        .items.add({
+          ...newRequest,
+        })
+        .then(async (res) => {
+          console.log(res);
+          // Update department and subdepartment
+          await updateLeaveRequestWithDepartment(
+            res.ID,
+            envContext.userEmail,
+            department,
+            subdepartment
+          );
+        });
       console.log("Leave request added:", response);
+
       openNotification();
+
+      // Reset form and state variables
+      form.resetFields();
+      setNumberOfDays(null);
+      setStartDate(null);
+      setEndDate(null);
+      setLeaveType(null);
+      setReason(null);
     } catch (error) {
       console.error("Error adding leave request:", error);
+    } finally {
+      setDisableSubmit(false); // Enable submit button
     }
-    form.resetFields();
-    setNumberOfDays(null);
-    setDisableSubmit(false);
   };
 
   const changeLeaveType = (value: string) => {
@@ -215,7 +331,7 @@ export default function ApplyLeave() {
           <Card className={styles.card1}>
             <div className={styles.colorBox1}>
               <span className={styles.colorBox1Number}>
-                <CountUp start={0} duration={3} />
+                <CountUp start={0} end={leavesAvailable} duration={3} />
               </span>
             </div>
 
@@ -225,7 +341,7 @@ export default function ApplyLeave() {
           <Card className={styles.card2}>
             <div className={styles.colorBox2}>
               <span className={styles.colorBox2Number}>
-                <CountUp start={0} duration={3} />
+                <CountUp start={0} end={leavesTaken} duration={3} />
               </span>
             </div>
             <span className={styles.cardText}>Leaves Taken</span>
@@ -234,7 +350,7 @@ export default function ApplyLeave() {
           <Card className={styles.card3}>
             <div className={styles.colorBox3}>
               <span className={styles.colorBox3Number}>
-                <CountUp start={0} end={24} duration={3} />
+                <CountUp start={0} end={totalLeaves} duration={3} />
               </span>
             </div>
             <span className={styles.cardText}>Total Leaves</span>
@@ -328,6 +444,9 @@ export default function ApplyLeave() {
                         <Select.Option value="Personal">Personal</Select.Option>
                         <Select.Option value="Compoff">
                           Compensatory off
+                        </Select.Option>
+                        <Select.Option value="Unpaid" disabled={!unpaidEnabled}>
+                          Unpaid
                         </Select.Option>
                         <Select.Option value="Other">Other</Select.Option>
                       </Select>

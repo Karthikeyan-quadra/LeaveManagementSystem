@@ -1,5 +1,10 @@
 import * as React from "react";
-import { getDepartmentList, getDepartmentUserList } from "../Data/GetSiteLit";
+import {
+  getDepartmentList,
+  getDepartmentUserList,
+  getLeaveList,
+  updateLeaveList,
+} from "../Data/GetSiteLit";
 import { useForm } from "antd/es/form/Form";
 import {
   Row,
@@ -282,6 +287,7 @@ export default function DepartmentUser() {
         placement: "top",
       });
       console.log("User added:", response);
+      await updateLeaveList(add_EmailID, add_Leave);
     } catch (error) {
       console.error("Error adding user:", error);
     }
@@ -388,6 +394,7 @@ export default function DepartmentUser() {
         placement: "top",
       });
       console.log("User updated:", response);
+      await updateLeaveList(edit_EmailID, edit_Leave);
     } catch (error) {
       console.error("Error updating user:", error);
       notification.error({
